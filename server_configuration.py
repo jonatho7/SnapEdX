@@ -1,5 +1,5 @@
 ############ START CHANGE FROM LOCAL DEVELOPMENT TO HOSTED SITE ##############
-SERVER_URL_BASE = "http://think.cs.vt.edu/snapEdX"
+SERVER_URL_BASE = "http://think.cs.vt.edu/SnapEdX"
 LOCAL_URL_BASE = "http://127.0.0.1:5000"
 
 
