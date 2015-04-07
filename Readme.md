@@ -1,4 +1,4 @@
-# SnapEdX
+# SnapEdX (CS 6604 course project)
 Base repository for the hosted Snap content for OpenEdX
 
 
