@@ -48,10 +48,11 @@ else:
 
 weatherservice.connect()
 app = Flask(__name__)
-weatherReport = "";
 
-
-
+# Server Variables.
+weatherReport = ""
+user_cloud_variables = {}
+server_cloud_variables = {}
 
 
 
@@ -200,7 +201,7 @@ def fakeWeather():
     return jsonify(temp=53)
     
 
-@app.route('/weather')
+@app.route('/api/dataservice/weather')
 def weather():
     locationString = request.args.get('location')
     weatherReport = weatherservice.get_report(locationString)
@@ -213,13 +214,13 @@ def weather():
     
     return jsonify(weatherReport=weatherReport)
     
-@app.route('/redditPosts')
+@app.route('/api/dataservice/redditPosts')
 def redditPosts():
     subreddit = request.args.get('subreddit')
     posts = red.get_posts_as_json(subreddit,'hot',False)
     return jsonify(redditReport=posts)
 
-@app.route('/redditComments')
+@app.route('/api/dataservice/redditComments')
 def redditComments():
     postID = str(request.args.get('postID'))
     sort_mode='hot'
@@ -230,7 +231,7 @@ def redditComments():
     return jsonify(redditReport=commentsJson)
     #TODO. Can I return without using jsonify, bc it is already in json format?
 
-@app.route('/stocks')
+@app.route('/api/dataservice/stocks')
 def stocks():
     try:
         stockQuery = str(request.args.get('stockQuery'))
@@ -239,7 +240,7 @@ def stocks():
     except stockservice.StockServiceException:
         return jsonify(stockReport="")
     
-@app.route('/twitter')
+@app.route('/api/dataservice/twitter')
 def twitter():
     #Get the request parameters.
     twitterFactor = str(request.args.get('twitterFactor'))
@@ -264,7 +265,7 @@ def twitter():
     #Return the results.
     return jsonify(twitterReport=twitterReport)
 
-@app.route('/location')
+@app.route('/api/dataservice/location')
 def location():
     # Get the request parameters.
     address = str(request.args.get('address'))
@@ -273,12 +274,12 @@ def location():
     locationReport = locationservice.get_lat_and_long(address)
     return jsonify(locationReport=locationReport)
 
-@app.route('/earthquakes')
+@app.route('/api/dataservice/earthquakes')
 def earthquakes():
     # Get the request parameters.
     earthquakePeriod = str(request.args.get('earthquakePeriod'))
 
-    # Get the latitude and longitude values.
+    # Get the earthquake report.
     earthquakeReport = earthquakeservice.get_report(earthquakePeriod, 'all')
     return jsonify(earthquakeReport=earthquakeReport)
 
@@ -300,9 +301,9 @@ def reportDataFromColumn():
 
 
 
+# Data Tools Blocks - Start
 
-
-@app.route('/urlRequestForClient')
+@app.route('/api/dataservice/urlRequestForClient')
 def urlRequestForClient():
     #Get the request parameters.
     urlString = str(request.args.get('urlString'))
@@ -320,6 +321,323 @@ def urlRequestForClient():
 
     #Return the results.
     return jsonify(urlReport=urlReport)
+
+@app.route('/api/cloudvariables/doSetCloudVariable')
+def doSetCloudVariable():
+    # Get the request parameters.
+    user_id = str(request.args.get('user_id'))
+    isValueAReferenceIndex = str(request.args.get('isValueAReferenceIndex'))
+    variable_name = str(request.args.get('variable_name'))
+    variable_value = str(request.args.get('variable_value'))
+
+    # Get the user setup with a user_id if they need one.
+    if user_cloud_variables.get(user_id) is None:
+        user_cloud_variables[user_id] = {}
+
+
+    # If the value is not a reference index, simply store the value.
+    if isValueAReferenceIndex == "false":
+        # Store the variable on the server.
+        user_cloud_variables[user_id][variable_name] = variable_value
+    else :
+        # The value is a reference index, meaning the variable is already stored on the cloud server.
+        variable_reference_index = variable_value;
+        variable_reference = server_cloud_variables[user_id][variable_reference_index]
+        user_cloud_variables[user_id][variable_name] = variable_reference
+
+    # Return a report.
+    report = {'data': 'success'}
+    return jsonify(report=report)
+
+
+@app.route('/api/cloudvariables/doRetrieveDataFromCloudVariable')
+def doRetrieveDataFromCloudVariable():
+    #Get the request parameters.
+    user_id = str(request.args.get('user_id'))
+    variable_name = str(request.args.get('variable_name'))
+    variable_value = None
+
+    # If variable_name is a string or a number, then proceed.
+    if isinstance(variable_name, str) or isinstance(variable_name, (int, long, float)):
+        # Check the variable_name - Start
+        if user_cloud_variables.get(user_id) is None:
+            # There isn't a user_id because no variables have been added yet . Return an error.
+            report = {'data': None, 'wasValueRetrieved': False, 'errorMessage': "The cloud variable '" + variable_name + "' was not found"}
+            return jsonify(report=report)
+        if user_cloud_variables.get(user_id).get(variable_name) is None:
+            # There is a user_id but this variable does not exist. Return an error.
+            report = {'data': None, 'wasValueRetrieved': False, 'errorMessage': "The cloud variable '" + variable_name + "' was not found"}
+            return jsonify(report=report)
+        #Check the variable_name - End
+
+        variable_value_object = user_cloud_variables.get(user_id).get(variable_name)
+        if isinstance(variable_value_object, str) or isinstance(variable_value_object, (int, long, float)):
+            # variable_value is simply a string or a number. Just return it.
+            variable_value = user_cloud_variables[user_id][variable_name]
+            report = {'data': variable_value, "data_type" : "primitive", 'wasValueRetrieved': True}
+            return jsonify(report=report)
+        elif isinstance(variable_value_object, dict):
+            if (variable_value_object.get('variable_type') is not None) and (variable_value_object.get('variable_contents') is not None):
+                if variable_value_object.get('variable_type') == "dataframe":
+                    variable_value = user_cloud_variables[user_id][variable_name]['variable_contents']
+
+                    # Now convert the dataframe to a string, to send it back to the client.
+                    temp_var = StringIO.StringIO()
+                    variable_value.to_csv(temp_var)
+                    csv_output_string = temp_var.getvalue()
+                    data_type = "dataframe"
+
+                    report = {'data': csv_output_string, 'data_type' : data_type, 'wasValueRetrieved': True}
+                    return jsonify(report=report)
+
+    else:
+        report = {'data': None, 'wasValueRetrieved': False, 'errorMessage': "The cloud variable name must be a string or a number"}
+        return jsonify(report=report)
+
+
+
+
+@app.route('/api/internaldataprocessing/select')
+def dataprocessingSelect():
+    # pandas is only required for a few of the data processing operations.
+    import pandas as pandas
+
+    # Setup the debugger.
+    computeservice.setup_debugger(app.logger)
+
+    # Get the request parameters.
+    user_id = str(request.args.get('user_id'))
+    isSelectAllFields = str(request.args.get('isSelectAllFields'))
+    selectedFields = str(request.args.get('selectedFields'))
+    condition_field = str(request.args.get('conditionField'))
+    condition_operator = str(request.args.get('conditionOperator'))
+    condition_value = str(request.args.get('conditionValue'))
+    dataSourceType = str(request.args.get('dataSourceType'))
+    dataSourceValue = str(request.args.get('dataSourceValue'))
+
+    # Check the dataSource parameters and Get the data source.
+    (errorReport , methodReturnValue) = verifyAndGetDataSource(pandas, user_id, dataSourceType, dataSourceValue)
+    if errorReport == "errorOccurred":
+        return methodReturnValue
+    elif methodReturnValue is None:
+        report = {'errorMessage': "The data source type was not a url or a cloud variable."}
+        return jsonify(report=report)
+    else:
+        csv_dataframe = methodReturnValue
+
+
+    # perform the select method.
+    results = computeservice.select_method(csv_dataframe, condition_field, condition_operator, condition_value)
+    # Check for an error.
+    if results.get('errorMessage') is not None:
+        report = {'errorMessage': results.get('errorMessage')}
+        return jsonify(report=report)
+
+    variable_type = results.get('variable_type')    #variable_type = "dataframe" or "primitive"
+    variable_value = results.get('variable_value')
+
+    # Testing.
+    app.logger.debug(variable_value)
+
+    '''
+    Store the result of the processing operation in the serverCloudVariables dictionary.
+    Then receive a variable_reference_index which is a number which is used to later reference the stored variable.
+    '''
+    variable_reference_index = storeInServerCloudVariablesDictionary(user_id, variable_type, variable_value)
+
+    # form a report with a reference to the variable on the cloud and then return it.
+    data = {'variable_reference_index': variable_reference_index, "errorMessage": None}
+    report = {'data': data}
+    return jsonify(report=report)
+
+@app.route('/api/internaldataprocessing/methodSet1')
+def dataprocessingMethodSet1():
+    #For the maximum and minimum methods.
+
+    # pandas is only required for a few of the data processing operations.
+    import pandas as pandas
+
+    # Setup the debugger.
+    computeservice.setup_debugger(app.logger)
+
+    # Get the request parameters.
+    user_id = str(request.args.get('user_id'))
+    operationType = str(request.args.get('operationType'))
+    field = str(request.args.get('field'))
+    dataSourceType = str(request.args.get('dataSourceType'))
+    dataSourceValue = str(request.args.get('dataSourceValue'))
+    returnType = str(request.args.get('returnType'))
+
+    # Check the dataSource parameters and Get the data source.
+    (errorReport , methodReturnValue) = verifyAndGetDataSource(pandas, user_id, dataSourceType, dataSourceValue)
+    if errorReport == "errorOccurred":
+        return methodReturnValue
+    elif methodReturnValue is None:
+        report = {'errorMessage': "The data source type was not a url or a cloud variable."}
+        return jsonify(report=report)
+    else:
+        csv_dataframe = methodReturnValue
+
+    # perform the maximum, minimimum, etc.
+    results = computeservice.processingMethodsSet1(csv_dataframe, operationType, field, returnType)
+    # Check for an error.
+    if results.get('errorMessage') is not None:
+        # Then there was an error. Return the errorMessage.
+        report = {'errorMessage': results.get('errorMessage')}
+        return jsonify(report=report)
+
+
+    variable_type = results.get('variable_type')    #variable_type = "dataframe" or "primitive"
+    variable_value = results.get('variable_value')
+
+    # Testing
+    app.logger.debug(variable_value)
+    app.logger.debug(type(variable_value))
+
+    '''
+    Store the result of the processing operation in the serverCloudVariables dictionary.
+    Then receive a variable_reference_index which is a number which is used to later reference the stored variable.
+    '''
+    variable_reference_index = storeInServerCloudVariablesDictionary(user_id, variable_type, variable_value)
+
+    # form a report with a reference to the variable on the cloud and then return it.
+    data = {'variable_reference_index': variable_reference_index, "errorMessage": None}
+    report = {'data': data}
+    return jsonify(report=report)
+
+
+@app.route('/api/internaldataprocessing/methodSet2')
+def dataprocessingMethodSet2():
+    # For the average, median, sum, product, etc. methods.
+
+    # pandas is only required for a few of the data processing operations.
+    import pandas as pandas
+    import numpy as np
+
+    # Setup the debugger.
+    computeservice.setup_debugger(app.logger)
+
+    # Get the request parameters.
+    user_id = str(request.args.get('user_id'))
+    operationType = str(request.args.get('operationType'))
+    field = str(request.args.get('field'))
+    dataSourceType = str(request.args.get('dataSourceType'))
+    dataSourceValue = str(request.args.get('dataSourceValue'))
+
+
+    # Check the dataSource parameters and Get the data source.
+    (errorReport , methodReturnValue) = verifyAndGetDataSource(pandas, user_id, dataSourceType, dataSourceValue)
+    if errorReport == "errorOccurred":
+        return methodReturnValue
+    elif methodReturnValue is None:
+        report = {'errorMessage': "The data source type was not a url or a cloud variable."}
+        return jsonify(report=report)
+    else:
+        csv_dataframe = methodReturnValue
+
+
+    # perform the desired processing method.
+    results = computeservice.processingMethodsSet2(csv_dataframe, operationType, field)
+
+    # Check for an error.
+    if results.get('errorMessage') is not None:
+        # Then there was an error. Return the errorMessage.
+        report = {'errorMessage': results.get('errorMessage')}
+        return jsonify(report=report)
+
+    variable_type = results.get('variable_type')    #variable_type = "dataframe" or "primitive"
+    variable_value = results.get('variable_value')
+
+    # Testing
+    app.logger.debug(variable_value)
+    app.logger.debug(type(variable_value))
+
+    '''
+    Store the result of the processing operation in the serverCloudVariables dictionary.
+    Then receive a variable_reference_index which is a number which is used to later reference the stored variable.
+    '''
+    variable_reference_index = storeInServerCloudVariablesDictionary(user_id, variable_type, variable_value)
+
+    # form a report with a reference to the variable on the cloud and then return it.
+    data = {'variable_reference_index': variable_reference_index, "errorMessage": None}
+    report = {'data': data}
+    return jsonify(report=report)
+
+
+
+def verifyAndGetDataSource(pandas, user_id, dataSourceType, dataSourceValue):
+    # If dataSourceType is a url.
+    if dataSourceType == "url":
+        # Read in the csv file.
+        try:
+            csv_dataframe = pandas.read_csv(dataSourceValue)
+        except IOError as e:
+            report = {'errorMessage': e.message}
+            return ("erorrOccurred", jsonify(report=report))
+    elif dataSourceType == "cloud_variable":
+        # Perform some checks to make sure we get a valid dataframe from the cloud variable.
+        if user_cloud_variables.get(user_id) is None:
+            # There isn't a user_id because no variables have been added yet . Return an error.
+            report = {'errorMessage': "The cloud variable '" + dataSourceValue + "' was not found"}
+            return ("erorrOccurred", jsonify(report=report))
+        if user_cloud_variables.get(user_id).get(dataSourceValue) is None:
+            # There is a user_id but this variable does not exist. Return an error.
+            report = {'errorMessage': "The cloud variable '" + dataSourceValue + "' was not found"}
+            return ("erorrOccurred", jsonify(report=report))
+        if isinstance(user_cloud_variables.get(user_id).get(dataSourceValue), (str, int, long, float)):
+            # The cloud variable is not a dataframe. Return an error.
+            report = {'errorMessage': "The cloud variable '" + dataSourceValue + "' is not a dataframe that can be operated on"}
+            return ("erorrOccurred", jsonify(report=report))
+        if user_cloud_variables.get(user_id).get(dataSourceValue).get('variable_type') != "dataframe":
+            # The cloud variable is not a dataframe. Return an error.
+            report = {'errorMessage': "The cloud variable '" + dataSourceValue + "' is not a dataframe that can be operated on"}
+            return ("erorrOccurred", jsonify(report=report))
+        if str(type(user_cloud_variables.get(user_id).get(dataSourceValue).get('variable_contents'))) != "<class 'pandas.core.frame.DataFrame'>":
+            # The cloud variable is not a dataframe. Return an error.
+            report = {'errorMessage': "The cloud variable '" + dataSourceValue + "' is not a dataframe that can be operated on"}
+            return ("erorrOccurred", jsonify(report=report))
+        # Checks passed. The cloud variable is a CSV dataframe. Retrieve the cloud variable.
+        csv_dataframe = user_cloud_variables.get(user_id).get(dataSourceValue).get('variable_contents')
+    else:
+        csv_dataframe = None
+
+    return ("noErrorOccurred", csv_dataframe)
+
+def storeInServerCloudVariablesDictionary(user_id, variable_type, variable_value):
+    # Store this result on the server somewhere, which can be accessed later.
+    # variable_reference_index counts the number of variables this user has created.
+    # This number will be used to reference a particular variable that was created earlier.
+
+    if server_cloud_variables.get(user_id) is None:
+        # The user has just run their first processing operation.
+        server_cloud_variables[user_id] = {}
+        server_cloud_variables[user_id]['variable_reference_index'] = 0
+    else:
+        # The user has already run a processing operation. Increment the index.
+        server_cloud_variables[user_id]['variable_reference_index'] = (server_cloud_variables[user_id]['variable_reference_index'] + 1)
+
+    # Get the variable_reference_index
+    variable_reference_index = str(server_cloud_variables[user_id]['variable_reference_index'])
+
+    # Store the contents inside server_cloud_variables.
+    if variable_type == "dataframe":
+        server_cloud_variables[user_id][variable_reference_index] = {}
+        server_cloud_variables[user_id][variable_reference_index]['variable_type'] = 'dataframe'
+        server_cloud_variables[user_id][variable_reference_index]['variable_contents'] = variable_value
+    elif variable_type == "primitive":
+        server_cloud_variables[user_id][variable_reference_index] = variable_value
+
+    return variable_reference_index
+
+
+
+# Data Tools Blocks - End
+
+
+
+
+
+
 
 
 @app.route('/runTestCloudMethod1')
@@ -342,109 +660,6 @@ def runTestCloudMethod1():
     report = {'data': data}
 
     return jsonify(report=report)
-
-def urlRequestWithoutHeaders(urlString):
-    newURLString = "http://" + urlString
-    rawResponseJSONAsString = _getWithoutHeaders(newURLString)
-    app.logger.debug(type(rawResponseJSONAsString))
-
-    #Form the response.
-    report = {'data': rawResponseJSONAsString}
-
-    #Return the results.
-    return report
-
-
-def _getWithoutHeaders(urlString):
-    """
-    Internal method to convert a URL into it's response (a *str*).
-
-    :param str urlString: the url to request a response from
-    :returns: the *str* response
-    """
-    if PYTHON_3:
-        req = request.Request(urlString)
-        response = request.urlopen(req)
-        return response.read().decode('utf-8')
-    else:
-        req = urllib2.Request(urlString)
-        response = urllib2.urlopen(req)
-        return response.read()
-
-
-# @app.route('/computeservice/runTestCloudMethod1')
-# def runTestCloudMethod1():
-#     report = 34
-#     return jsonify(report = report)
-#
-#     # Testing purposes.
-#     # data = 15
-#     # report = {'data': data}
-#     # return jsonify(report=report)
-#     #return jsonReport
-
-
-
-@app.route('/computeservice/runTestCloudMethod2')
-def runTestCloudMethod2():
-
-    # pandas is not installed on the think server yet. So to avoid errors, I will put the import here for now.
-    import pandas as pandas
-
-    computeservice.setup_debugger(app.logger)
-
-    # Start - Testing for XML Parsing.
-
-    xml_string = '<project name="getFluPeakFor2014" app="Snap! 4.0, http://snap.berkeley.edu" version="1"><notes></notes><thumbnail>data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAB4CAYAAAB1ovlvAAAFI0lEQVR4Xu2YvUuceRDHZ2OQcLuYwheOOyUEDCgB0cJo4ZEinIU2UfE66xT2QgI23omkDOG6+wNSXGHhgY2gKPgChy+HRVJoCMEmooJnIDHJhucpFpfE5GGcsJnhsyDq7m9mZz7fD8/jmisWi0XhAYEKEcghYIXI87YpAQREhIoS+KyAy8vLsrKyIsndOZfLfbPvdXV1MjIyUlEAvHllCXwi4OzsrDQ3N6umutbUKE9++1mqq3JfrL9y+ZLcerQpJycn6bmamhppaGhQvSdFvgmUCbiwsCD19fXqK96/93+RgZZ8JiKFhy9ke3s7vcIeHx9LV1dXpjoOxSJQJuD4+LgMDg6mUqyvr8v09LQkUs7Pz0tPT48sLi7K0dGRJLfovr4+6ejokHw+nz6fPJ79/qv03/gh/bnwx1N5u/iXVN++J+931+TD4Ut58/dYiV4i4MbGRkn29vb2WGTZJhOBMgHHxsZkaGgoLdzc3JTe3l6pra2VQqGQ3i4PDw/Tr+S1zs5O2d/fl0Sc5Lm9vT15/rA/FTD/YE1yV3+Ud//9I5KrkuL/r6Tqp5vy+s+7ZQKurq6WfucKmCmvcIfKBDw4OCjdFjUfQA4eD8md61cyQUqugEtLS+kVcGtrS0ZHRzPVcSgWgU8+hExOTkp3d7dqy+Tvx7a2tky1c3Nz6bnkyskn4UzIQh7i/4AhY/WzFAL6ySrkpAgYMlY/SyGgn6xCToqAIWP1sxQC+skq5KQIGDJWP0shoJ+sQk6KgCFj9bMUAvrJKuSkCBgyVj9LIaCfrEJOioAhY/WzFAL6ySrkpAgYMlY/SyGgn6xCToqAIWP1sxQC+skq5KQIGDJWP0shoJ+sQk6KgCFj9bMUAvrJKuSkCBgyVj9LIaCfrEJOioAhY/WzFAL6ySrkpAgYMlY/SyGgn6xCToqAIWP1sxQC+skq5KQIGDJWP0shoJ+sQk6KgCFj9bMUAvrJKuSkCBgyVj9LIaCfrEJOioAhY/WzFAL6ySrkpAgYMlY/SyGgn6xCToqAIWP1sxQC+skq5KQIGDJWP0shoJ+sQk6KgCFj9bMUAvrJKuSkCBgyVj9LIeA5WbW2tsrExIQMDw/7SdPhpAj4hdAGBgZKr+7s7MjMzIw0NTU5jPn7HRkBv5LNWQnPHj09PU2F5HExAgiIgBcz6ILVCJjxFry7u5te8RobGy+InPKzBBDwHB9aWlpkampKzrsFo5ENAQS04UgXJQEEVIKjzIYAAtpwpIuSAAIqwVFmQwABbTjSRUkAAZXgKLMhgIA2HOmiJICASnCU2RBAQBuOdFESQEAlOMpsCCCgDUe6KAkgoBIcZTYEENCGI12UBBBQCY4yGwIIaMORLkoCCKgER5kNAQS04UgXJQEEVIKjzIYAAtpwpIuSAAIqwVFmQwABbTjSRUkAAZXgKLMhgIA2HOmiJICASnCU2RBAQBuOdFESQEAlOMpsCCCgDUe6KAkgoBIcZTYEENCGI12UBBBQCY4yGwIIaMORLkoCCKgER5kNAQS04UgXJQEEVIKjzIYAAtpwpIuSAAIqwVFmQwABbTjSRUkAAZXgKLMhgIA2HOmiJICASnCU2RBAQBuOdFESQEAlOMpsCCCgDUe6KAkgoBIcZTYEENCGI12UBBBQCY4yGwIIaMORLkoCCKgER5kNAQS04UgXJQEEVIKjzIYAAtpwpIuSAAIqwVFmQwABbTjSRUkAAZXgKLMhgIA2HOmiJICASnCU2RBAQBuOdFES+Aiq4Ne3E8MQOwAAAABJRU5ErkJggg==</thumbnail><stage name="Stage" width="480" height="360" costume="0" tempo="60" threadsafe="false" lines="round" codify="false" scheduled="false" id="1"><pentrails>data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAFoCAYAAACPNyggAAAOhUlEQVR4Xu3VwQkAAAjEMN1/abewn7jAQRC64wgQIECAAIF3gX1fNEiAAAECBAiMAHsCAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQIHLFxAWmhEwHPAAAAAElFTkSuQmCC</pentrails><costumes><list id="2"></list></costumes><sounds><list id="3"></list></sounds><variables></variables><blocks></blocks><scripts></scripts><sprites><sprite name="Sprite" idx="1" x="0" y="0" heading="90" scale="1" rotation="1" draggable="true" costume="0" color="80,80,80" pen="tip" id="8"><costumes><list id="9"></list></costumes><sounds><list id="10"></list></sounds><variables></variables><blocks></blocks><scripts><script x="29" y="38"><block s="receiveGo"></block><block s="doBroadcastAndWait"><l>defineCloudMethod</l></block><block s="doSetVar"><l>results</l><block s="doRunCloudMethod"><l>getFluPeakForYear</l><list><l>hosted csv file url</l><l>2014</l></list></block></block></script><script x="29" y="172"><block s="receiveMessage"><l>defineCloudMethod</l></block><block s="doDefineCloudMethod"><l>getFluPeakForYear</l><list><l>data_source</l><l>year</l></list><script><block s="doSetCloudVariable"><l>a</l><block s="reportDataSelector"><l><option>all fields</option></l><block s="reportDataCondition"><l>YEAR</l><l><option>=</option></l><block s="doGetMethodParameter"><l>year</l></block></block><l></l><block s="doGetMethodParameter"><l>data_source</l></block></block></block><block s="doSetCloudVariable"><l>b</l><block s="reportDataMaximum"><l><option>maximum</option></l><l>ILITotal</l><block s="doGetCloudVariable"><l>a</l></block><l><option>entire row</option></l></block></block><block s="doCloudReport"><block s="doGetCloudVariable"><l>b</l></block></block></script></block></script></scripts></sprite><watcher var="results" style="normal" x="10" y="10" color="243,118,29"/></sprites></stage><hidden></hidden><headers></headers><code></code><blocks></blocks><variables><variable name="results"><l>450</l></variable></variables></project>'
-
-    root = element_tree.fromstring(xml_string)
-
-    # mine = root.find('stage').get('width')
-
-    first_block = root.find('stage').find('sprites').find('sprite').find('scripts').find('script').find('block').get('s')
-    app.logger.debug(first_block)
-
-    # End - Testing for XML Parsing.
-
-
-    # Runs a cloud computation.
-
-
-    # Run the select method.
-    # csv_url = 'static/sampleData/fludata_small.csv'
-    # csv_url = 'http://think.cs.vt.edu/snap/static/sampleData/fludata_small.csv'
-    # csv_url = 'https://drive.google.com/file/d/0B-WWj_i0WSomYlptdDN5NFU1X0k/view?usp=sharing'. This one doesnt work.
-    # csv_url = 'https://drive.google.com/uc?export=download&id=0B-WWj_i0WSomYlptdDN5NFU1X0k'  # Flu Data Small CSV
-    csv_url = 'https://drive.google.com/uc?export=download&id=0B-WWj_i0WSomaUkwQVpYenlRWm8'  # ILINET-All Regions CSV
-    condition_field = 'YEAR'
-    condition_operator = '=='
-    condition_value = '2014'
-
-    # Read in the csv file.
-    csv_dataframe = pandas.read_csv(csv_url)
-
-    # perform the select method.
-    cloud_var_a_dataframe = computeservice.select_method(csv_dataframe, condition_field, condition_operator, condition_value)
-
-    # setup the variables needed for the maximum method.
-    field_name = 'ILITOTAL'
-    return_type_string = 'entire row'  # possible values: 'entire row' OR 'value only'
-
-    # perform the maximum method.
-    cloud_var_b_dataframe = computeservice.get_maximum(cloud_var_a_dataframe, field_name, return_type_string)
-
-    # convert the dataframe to a string.
-    temp_var = StringIO.StringIO()
-    cloud_var_b_dataframe.to_csv(temp_var)
-    csv_output_string = temp_var.getvalue()
-
-    # form a report and then return it.
-    report = {'data': csv_output_string}
-    return jsonify(report=report)
-
-    # Testing purposes.
-    # report = {'data': 15}
-    # return jsonify(report=report)
 
 
 @app.route('/api/returnTestData')
