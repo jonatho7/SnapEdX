@@ -2,8 +2,9 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-		<title>Snap! Build Your Own Blocks. Beta</title>
-        <link rel="shortcut icon" href="http://snap.berkeley.edu/fav3.gif" type="image/gif">
+		<title>DataSnap</title>
+        <link rel="icon" href="{{ SITE_URL_BASE }}/static/Snap/datasnap.ico">
+
 		<!--Changed these URLS.-->
 		<script type="text/javascript" src="{{ SITE_URL_BASE }}/static/Snap/morphic.js"></script>
 		<script type="text/javascript" src="{{ SITE_URL_BASE }}/static/Snap/widgets.js"></script>
@@ -39,8 +40,8 @@
 
             function initialize() {
                 var mapOptions = {
-                    zoom: 2,
-                    center: {lat: -14.7072629, lng: 19.4962294},
+                    zoom: 1,
+                    center: {lat: 0, lng: 0},
                     mapTypeId: google.maps.MapTypeId.TERRAIN,
                     scaleControl: true
                 };
@@ -70,14 +71,18 @@
 			var world;
             var global_ide;
 			window.onload = function () {
-                world = new WorldMorph(document.getElementById('world'));
-                world.worldCanvas.focus();
 
+                // Auto-resize world.
+                // world = new WorldMorph(document.getElementById('world'));
+
+                // Fixed size world
+                world = new WorldMorph(document.getElementById('world'), false);
+
+                world.worldCanvas.focus();
                 global_ide = new IDE_Morph;
                 global_ide.openIn(world);
-				//new IDE_Morph().openIn(world);
 
-                world.isDevMode = true;
+                //world.isDevMode = true;
 
 				setInterval(loop, 1);
 			};
@@ -88,41 +93,29 @@
 
 
 	</head>
-	<body style="margin: 0;">
+	<body style="margin: 0; background-color: #373737; ">
 
-        <canvas id="world" tabindex="1"></canvas>
+        <!-- Auto-resize world -->
+        <!-- <canvas id="world" tabindex="1"></canvas> -->
 
-
-        <div style="padding: 10px 30px;">
-            <div>
-
-                <p class="mapSizeTitle"><strong>Map Size: </strong></p>
-                <button type="button" class="changeMapSize1">Small</button>
-                <button type="button" class="changeMapSize2">Medium</button>
-                <button type="button" class="changeMapSize3">Large</button>
-                <button type="button" class="changeMapSize4">Larger</button>
-
-                <p class="mapWidthTitle"><strong>Custom Map Width: </strong></p>
-                <input class="mapWidth" type="text" required="" name="mapWidth" value="1024">
-                <p class="mapHeightTitle"><strong>Custom Map Height: </strong></p>
-                <input class="mapHeight" type="text" required="" name="mapHeight" value="576">
-
-                <button type="button" class="changeMapSizeButton">Go</button>
-            </div>
-
-            <div id="map-canvas" style="width: 1024px; height: 576px; margin-top: 30px;">
-            </div>
-        </div>
+        <!-- Fixed size world-->
+        <canvas id="world" tabindex="1" width="1262" height="692" ></canvas>
 
 
+        <form action="" style="margin-top: 2em;">
 
+            <button type="button" class="exportSpriteAsXML">Testing: Export Sprite as XML</button>
+            <p></p>
+            (Submit Button Placeholder)<br><br>
+            <input type="submit" value="Submit Answer">
+        </form>
 
-
-
+{#        #}
+{#        <div id="map-canvas" style="width: 480px; height: 327px; margin-top: 0px;"></div>#}
 
 
         <!--Div at the bottom for some extra space.-->
-        <div style="height: 40px;"></div>
+        <div style="height: 120px;"></div>
 
     </body>
 </html>

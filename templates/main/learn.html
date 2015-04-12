@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    {#    <link rel="icon" href="http://getbootstrap.com/favicon.ico">#}
+    <link rel="icon" href="{{ SITE_URL_BASE }}/static/Snap/datasnap.ico">
 
-    <title>Snap Project</title>
+    <title>DataSnap</title>
 
     <!-- Bootstrap core CSS -->
     <link href="{{ SITE_URL_BASE }}/static/css/bootstrap.min.css" rel="stylesheet">
@@ -35,7 +35,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="{{ url_for('index')}}">Snap (Custom)</a>
+            <a class="navbar-brand" href="{{ url_for('index')}}">DataSnap</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
@@ -54,6 +54,7 @@
 <div class="container">
 
     <h2>Learn</h2>
+    <hr/>
 
     <br>
     <h3>Computer Science Concepts</h3>
@@ -73,8 +74,7 @@
         <br>
         <h4>Iteration</h4>
         <p><a href="{{ url_for('learnIteration')}}">Sample Lesson (Earthquake Data)</a></p>
-        <p><a href="{{ url_for('learnIteration')}}">Practice (Earthquake Data) </a></p>
-
+        <hr/>
     </div>
 
     <br>
@@ -87,7 +87,7 @@
         <br>
         <h4>Reddit</h4>
         <p>Practice</p>
-
+        <hr/>
     </div>
 
     <br>
@@ -100,7 +100,7 @@
         <br>
         <h4>Google Maps - Weather Data</h4>
         <p>Practice</p>
-
+        <hr/>
     </div>
 
     <br>
@@ -111,7 +111,7 @@
         <h4>Stock Market Data</h4>
         <p><a href="{{ url_for('learnStreamingDataStocks')}}">Lesson (Streaming Stocks Data)</a></p>
         <p>Practice</p>
-
+        <hr/>
     </div>
 
 

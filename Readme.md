@@ -2,8 +2,6 @@
 Base repository for the hosted Snap content for OpenEdX
 
 
-This is the main repository for the custom implementation of the open-source Snap! platform FOR OPENEDX. This version of Snap! will add real-time and big-data libraries into the Snap! platform.
-
 ## Hosted Site: http://think.cs.vt.edu/snapedx/
 
 
