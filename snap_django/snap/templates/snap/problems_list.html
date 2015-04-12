@@ -12,7 +12,7 @@
 {% block page_content %}
 
     <div class="jumbotron">
-        <h4>List of Snap problems. Click on the Launch button to start solving it.</h4>
+        <h4>List of Snap problems. Click on the Launch button to launch it.</h4>
     </div>
 
     <div class="table-responsive">
@@ -31,14 +31,14 @@
 
                     <td>
                         <a href="{{ default_launch_url }}#open:{% absolute 'snap:get_project'%}?projectName={{ prob.name }}" class="btn btn-primary"
-                           role="button"> Launch
+                           role="button" target="_blank"> Launch
                         </a>
                     </td>
 
                     <td>
                         {# link to project as xml #}
                         <a href="{% absolute 'snap:get_project'%}?projectName={{ prob.name }}" class="btn btn-primary"
-                           role="button"> Display
+                           role="button" target="_blank"> Display
                         </a>
                     </td>
 
