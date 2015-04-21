@@ -11,6 +11,7 @@ from urllib import quote
 from django.shortcuts import redirect
 from django.views.decorators.clickjacking import xframe_options_exempt
 
+
 def allow_cross_domain_requests(response):
     """
     Allows cross domain requests
@@ -78,5 +79,6 @@ def launch_problem(request, *args, **kwargs):
     absolute_project_name_url = request.build_absolute_uri(reverse('snap:get_project'))
     project_name = kwargs['problem_name']
     absolute_project_name_url += '?projectName=' + quote(project_name)
-    return redirect(absolute_project_name_url)
+    snap_host_url = settings.DEFAULT_LAUNCH_URL + '/snap#open:' + absolute_project_name_url
+    return redirect(snap_host_url)
 
