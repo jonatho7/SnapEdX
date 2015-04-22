@@ -59,6 +59,11 @@
 
             }
 
+            function sayHello() {
+                return "Hey";
+            }
+
+
             // Call the initialize function after the page has finished loading
             google.maps.event.addDomListener(window, 'load', initialize);
 
@@ -103,16 +108,9 @@
 
 
         <form action="" style="margin-top: 2em;">
-            <button type="button" class="importSprite">Import Teacher Program Sprite to Grade With</button>
-            <p></p>
-            <button type="button" class="runTests">Run Teacher and Student Tests</button>
-            <p></p>
-            <button type="button" class="hideGraderSprite">Hide the Grader Sprite</button>
-            <p></p>
-            <button type="button" class="removeGraderSprite">Remove the Grader Sprite</button>
-            <p></p>
-            <button type="button" class="getResults">Get Results (Print in Console)</button>
-            <p></p>
+            <p>Testing Purposes: Open JS Console and run:</p>
+            <p>Run this method to start the tests: startStudentTests()</p>
+            <p>Run this method to query whether the tests have finished / retrieve results: retrieveStudentTestResults()</p>
             (Submit Button Placeholder)<br><br>
             <input type="submit" value="Submit Answer">
         </form>
