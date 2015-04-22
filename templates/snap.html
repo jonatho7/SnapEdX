@@ -34,10 +34,32 @@
         <!--Google Maps-->
         <!--Using my personal key. This key need not be private because only certain websites can use this specific key. Configure this in Google API's Console.-->
         <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBDIh3KocIcco9npZsjy9C1GqVjWz_XCjM"></script>
+	<script>
+	
+jQuery(document).ready(function(){ 		
+		setInterval(function() {
+	// Send the message "Hello" to the parent window
+	// ...if the domain is still "davidwalsh.name"
+	var x = {"test" : [1, 2, 3]}
+	parent.postMessage(x,"*");
+        console.log("repeat");
+},1000);
+	console.log("Outer got called")
+});	
+	var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
+	var eventer = window[eventMethod];
+	var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
+
+	// Listen to message from child window
+	eventer(messageEvent,function(e) {
+  		console.log('snap received message!:  ',e.data);
+	},false);	
+
+</script>
 
         <script>
             var googleMap;
-
+	    
             function initialize() {
                 var mapOptions = {
                     zoom: 1,
