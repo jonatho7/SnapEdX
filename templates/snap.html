@@ -81,6 +81,11 @@ jQuery(document).ready(function(){
 
             }
 
+            function sayHello() {
+                return "Hey";
+            }
+
+
             // Call the initialize function after the page has finished loading
             google.maps.event.addDomListener(window, 'load', initialize);
 
@@ -125,9 +130,9 @@ jQuery(document).ready(function(){
 
 
         <form action="" style="margin-top: 2em;">
-
-            <button type="button" class="exportSpriteAsXML">Testing: Export Sprite as XML</button>
-            <p></p>
+            <p>Testing Purposes: Open JS Console and run:</p>
+            <p>Run this method to start the tests: startStudentTests() or startTeacherTests()</p>
+            <p>Run this method to query whether the tests have finished / retrieve results: retrieveTestResults()</p>
             (Submit Button Placeholder)<br><br>
             <input type="submit" value="Submit Answer">
         </form>

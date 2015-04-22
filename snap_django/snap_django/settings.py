@@ -97,7 +97,7 @@ STATIC_URL = '/static/'  # location of static folder
 
 
 # Works only if capital parameters are in capital letters
-DEFAULT_LAUNCH_URL = "http://think.cs.vt.edu/snap/snap"
+DEFAULT_LAUNCH_URL = "http://think.cs.vt.edu/snapedx"
 
 
 TEMPLATE_CONTEXT_PROCESSORS = (

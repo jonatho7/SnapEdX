@@ -6,6 +6,10 @@ from models import Projects
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
 from django.conf import settings
+from django.core.urlresolvers import reverse
+from urllib import quote
+from django.shortcuts import redirect
+from django.views.decorators.clickjacking import xframe_options_exempt
 
 
 def allow_cross_domain_requests(response):
@@ -35,6 +39,7 @@ def test(request):
     return allow_cross_domain_requests(response)
 
 
+@xframe_options_exempt
 def get_project(request):
     """
 
@@ -66,4 +71,14 @@ def list_problems(request):
                                                            'default_launch_url': settings.DEFAULT_LAUNCH_URL,
                                                            })
     return allow_cross_domain_requests(response)
+
+
+def launch_problem(request, *args, **kwargs):
+    #return HttpResponse('problem name = {}'.format(kwargs['problem_name']))
+
+    absolute_project_name_url = request.build_absolute_uri(reverse('snap:get_project'))
+    project_name = kwargs['problem_name']
+    absolute_project_name_url += '?projectName=' + quote(project_name)
+    snap_host_url = settings.DEFAULT_LAUNCH_URL + '/snap#open:' + absolute_project_name_url
+    return redirect(snap_host_url)
 
