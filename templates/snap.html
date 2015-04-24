@@ -38,10 +38,32 @@
         <!--Google Maps-->
         <!--Using my personal key. This key need not be private because only certain websites can use this specific key. Configure this in Google API's Console.-->
         <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBDIh3KocIcco9npZsjy9C1GqVjWz_XCjM"></script>
+	<script>
+	
+jQuery(document).ready(function(){ 		
+		setInterval(function() {
+	// Send the message "Hello" to the parent window
+	// ...if the domain is still "davidwalsh.name"
+	var x = {"test" : [1, 2, 3]}
+	parent.postMessage(x,"*");
+        console.log("repeat");
+},1000);
+	console.log("Outer got called")
+});	
+	var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
+	var eventer = window[eventMethod];
+	var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
+
+	// Listen to message from child window
+	eventer(messageEvent,function(e) {
+  		console.log('snap received message!:  ',e.data);
+	},false);	
+
+</script>
 
         <script>
             var googleMap;
-
+	    
             function initialize() {
                 var mapOptions = {
                     zoom: 1,
@@ -62,6 +84,11 @@
                 }, 100);
 
             }
+
+            function sayHello() {
+                return "Hey";
+            }
+
 
             // Call the initialize function after the page has finished loading
             google.maps.event.addDomListener(window, 'load', initialize);
@@ -107,12 +134,9 @@
 
 
         <form action="" style="margin-top: 2em;">
-            <button type="button" class="importSprite">Import Teacher Program Sprite to Grade With</button>
-            <p></p>
-            <button type="button" class="runTests">Run Teacher and Student Tests</button>
-            <p></p>
-            <button type="button" class="getResults">Get Results (Print in Console)</button>
-            <p></p>
+            <p>Testing Purposes: Open JS Console and run:</p>
+            <p>Run this method to start the tests: startStudentTests() or startTeacherTests()</p>
+            <p>Run this method to query whether the tests have finished / retrieve results: retrieveTestResults()</p>
             (Submit Button Placeholder)<br><br>
             <input type="submit" value="Submit Answer">
         </form>
