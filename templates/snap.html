@@ -5,6 +5,7 @@
 		<title>DataSnap</title>
         <link rel="icon" href="{{ SITE_URL_BASE }}/static/Snap/datasnap.ico">
 
+
 		<!--Changed these URLS.-->
 		<script type="text/javascript" src="{{ SITE_URL_BASE }}/static/Snap/morphic.js"></script>
 		<script type="text/javascript" src="{{ SITE_URL_BASE }}/static/Snap/widgets.js"></script>
@@ -104,20 +105,16 @@
         <!-- <canvas id="world" tabindex="1"></canvas> -->
 
         <!-- Fixed size world-->
-        <canvas id="world" tabindex="1" width="1262" height="692" ></canvas>
+        <canvas id="world" tabindex="1" width="{{ problem_config['snap_width'] }}" height="{{ problem_config['snap_height'] }}" ></canvas>
 
 
         <form action="" style="margin-top: 2em;">
-            <p>Testing Purposes: Open JS Console and run:</p>
-            <p>Run this method to start the tests: startStudentTests() or startTeacherTests()</p>
-            <p>Run this method to query whether the tests have finished / retrieve results: retrieveTestResults()</p>
-            (Submit Button Placeholder)<br><br>
             <input type="submit" value="Submit Answer">
         </form>
 
-{#        #}
-{#        <div id="map-canvas" style="width: 480px; height: 327px; margin-top: 0px;"></div>#}
-
+        {% if problem_config['include_map'] == True %}
+            <div id="map-canvas" style="width: 480px; height: 327px; margin-top: 0px;"></div>
+        {% endif %}
 
         <!--Div at the bottom for some extra space.-->
         <div style="height: 120px;"></div>

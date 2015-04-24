@@ -13,7 +13,8 @@ from sheetsservice import sheetsservice
 from computeservice import computeservice as computeservice
 import StringIO
 import xml.etree.ElementTree as element_tree
-from server_configuration import SITE_URL_BASE, SERVER_URL_BASE, LOCAL_URL_BASE
+from server_configuration import *
+from problem_configuration import *
 
 
 
@@ -158,7 +159,30 @@ def contact():
 # Learn Category
 @app.route('/snap')
 def snap():
-    return render_template('snap.html', SITE_URL_BASE=SITE_URL_BASE)
+
+    # Opt1. Grab the optional parameters which can define the snap problem layout.
+    snapWidth = request.args.get('snapWidth')
+    snapHeight = request.args.get('snapHeight')
+    includeMap = request.args.get('includeMap')
+
+    app.logger.debug(includeMap)
+    app.logger.debug(type(includeMap))
+
+    app.logger.debug(type(problem_config['include_map']))
+
+    if snapWidth is not None:
+        problem_config['snap_width'] = snapWidth
+
+    if snapHeight is not None:
+        problem_config['snap_height'] = snapHeight
+
+    if includeMap == True:
+        problem_config['include_map'] = True
+
+    return render_template('snap.html', SITE_URL_BASE=SITE_URL_BASE, problem_config=problem_config)
+
+
+
 
 @app.route('/learn/iteration')
 def learnIteration():
