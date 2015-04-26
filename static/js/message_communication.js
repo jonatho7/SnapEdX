@@ -23,14 +23,16 @@ var loaded_as_iframe = false;
 var function_callbacks = {};
 
 var MESSAGES_TYPE = {
-    SUBMIT: 'SUBMIT' //Used for communication of submit option
-
+    DEMO:  'DEMO',  // only for demo purposes
+    SUBMIT: 'SUBMIT', //Used for communication of submit option
+    READY: 'READY',   // Message to indicate that iframe is setup
+    WATCHED: 'WATCHED'  // Watched event to parent
 };
 
 
 $(document).ready(function(){
 	if (inIframe() == true) {
-        console.log("Loaded as iframe");
+        console.log("(Snap content) Loaded as iframe");
         loaded_as_iframe = true;
 
         // Register callback to start receiving messages
@@ -43,14 +45,9 @@ $(document).ready(function(){
   		    var msg = e.data;
             console.log('Received message from parent:  ', msg.type, ' data = ', msg.data);
             // Call the function references only if object contains 'type' and 'data fields
-            if (msg.type in function_callbacks) {
-                console.log("Present type = ", msg.type);
-            } else {
-                console.log(" Not present ", msg.type);
-            }
             if ((msg.type in function_callbacks) && ('data' in msg)) {
                 // Call all the registered function handlers
-                console.log("len = ", function_callbacks[msg.type].length);
+                //console.log("len = ", function_callbacks[msg.type].length);
                 for (var i = 0 ; i < function_callbacks[msg.type].length; i++) {
                     function_callbacks[msg.type][i](msg.data)
                 }
@@ -58,12 +55,18 @@ $(document).ready(function(){
 
 	    },false);
 
+        // Send READY event to parent
+        send_message_to_parent(MESSAGES_TYPE.READY, {});
         // Just for testing (listen to Submit buttons)
-        register_callback(MESSAGES_TYPE.SUBMIT, function (data) { console.log("Printing the data = "+ data)});
-        //console.log(function_callbacks[MESSAGES_TYPE.SUBMIT])
+        register_callback(MESSAGES_TYPE.DEMO, function (data) { console.log("Printing the demo data received from" +
+            " main window = ", data)});
+
+
+        //Just for testing to parent window
+        send_message_to_parent(MESSAGES_TYPE.DEMO, { 'from:': 'iframe (snap)', 'to': 'xblock'});
 
     } else {
-        console.log("Loaded as main window");
+        console.log(" (Snap content) Loaded as main window");
     }
 
 });
@@ -88,9 +91,12 @@ function send_message_to_parent(type, data) {
             type: type,
             data: data
         };
-        console.log("Sending message of type " + type);
+        //console.log("Sending message of type " + type);
         parent.postMessage(message, '*');
     }
 }
+
+
+
 
 
