@@ -28,6 +28,13 @@
         <!--Custom JS added to project.-->
         <script type="text/javascript" src="{{ SITE_URL_BASE }}/static/Snap/controlScripts.js"></script>
 
+
+        <!-- Message passing layer -->
+        <script type="text/javascript" src="{{ SITE_URL_BASE }}/static/js/message_communication.js"></script>
+
+        <!-- Events to Xblock javascript code-->
+        <script type="text/javascript" src="{{ SITE_URL_BASE }}/static/js/eventsToXblock.js"></script>
+
         <!--Custom CSS added to project-->
         <link href="{{ SITE_URL_BASE }}/static/css/style.css" rel="stylesheet">
 
@@ -38,7 +45,7 @@
 
         <script>
             var googleMap;
-
+	    
             function initialize() {
                 var mapOptions = {
                     zoom: 1,
