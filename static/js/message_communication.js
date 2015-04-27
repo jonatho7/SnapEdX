@@ -22,11 +22,16 @@ var loaded_as_iframe = false;
 
 var function_callbacks = {};
 
+/*
+    This definitions needs to be in sync with messaging_xblock.js file in xblock_snap/static/js
+ */
 var MESSAGES_TYPE = {
     DEMO:  'DEMO',  // only for demo purposes
     SUBMIT: 'SUBMIT', //Used for communication of submit option
     READY: 'READY',   // Message to indicate that iframe is setup
-    WATCHED: 'WATCHED'  // Watched event to parent
+    WATCHED: 'WATCHED',  // Watched event to parent
+    SUBMIT:  'SUBMIT',  // Submit (obviously student submit) event from Xblock
+     RESULT:  'RESULT'  // Event to send results from snap to Xblock
 };
 
 
@@ -62,8 +67,11 @@ $(document).ready(function(){
             " main window = ", data)});
 
 
+
         //Just for testing to parent window
         send_message_to_parent(MESSAGES_TYPE.DEMO, { 'from:': 'iframe (snap)', 'to': 'xblock'});
+
+
 
     } else {
         console.log(" (Snap content) Loaded as main window");
