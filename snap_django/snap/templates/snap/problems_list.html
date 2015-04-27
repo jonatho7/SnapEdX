@@ -20,29 +20,63 @@
             {# This is header of the table #}
             <tr>
                 <th>Problem name</th>
-                <th>Run instance</th>
-                <th>Show as xml</th>
+                <th>Run instance (Teacher)</th>
+                <th>Show as xml (Teacher)</th>
+                <th>Run instance (Student)</th>
+                <th>Show as xml (Student)</th>
+                <th>Test cases (json) </th>
             </tr>
 
             {# contents of the table #}
             {% for prob in problem_list %}
-                <tr>
-                    <td>{{ prob.name }}</td>
+                    <tr>
+                        <td>{{ prob.name }}</td>
 
-                    <td>
-                        <a href="{{ default_launch_url }}/snap#open:{% absolute 'snap:get_project'%}?projectName={{ prob.name }}" class="btn btn-primary"
-                           role="button" target="_blank"> Launch
-                        </a>
-                    </td>
 
-                    <td>
-                        {# link to project as xml #}
-                        <a href="{% absolute 'snap:get_project'%}?projectName={{ prob.name }}" class="btn btn-primary"
-                           role="button" target="_blank"> Display
-                        </a>
-                    </td>
+                        {# Teacher instance launch #}
+                        <td>
+                            <a href="{{ default_launch_url }}/snap#open:{% absolute 'snap:get_project' prob.name 'teacher' %}" class="btn btn-primary"
+                               role="button" target="_blank"> Launch
+                            </a>
+                        </td>
 
-                </tr>
+
+
+                        {# Teacher instance xml #}
+                        <td>
+                            {# link to project as xml #}
+                            <a href="{% absolute 'snap:get_project' prob.name 'teacher' %}" class="btn btn-primary"
+                               role="button" target="_blank"> Display
+                            </a>
+                        </td>
+
+
+                        {# Student instance launch #}
+                        <td>
+                            <a href="{{ default_launch_url }}/snap#open:{% absolute 'snap:get_project' prob.name 'student' %}" class="btn btn-primary"
+                               role="button" target="_blank"> Launch
+                            </a>
+                        </td>
+
+                        {# Student instance xml #}
+                        <td>
+                            {# link to project as xml #}
+                            <a href="{% absolute 'snap:get_project' prob.name 'student' %}" class="btn btn-primary"
+                               role="button" target="_blank"> Display
+                            </a>
+                        </td>
+
+                        {# Test cases as json #}
+                        <td>
+                            {# link to project as xml #}
+                            <a href="{% absolute 'snap:get_project' prob.name 'test_cases' %}" class="btn btn-primary"
+                               role="button" target="_blank"> Display
+                            </a>
+
+                        </td>
+
+
+                    </tr>
 
             {% endfor %}
 
