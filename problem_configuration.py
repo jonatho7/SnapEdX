@@ -11,7 +11,3 @@ problem_config = {
     #'stage_height': 300
 }
 
-
-def set_problem_configuration(snap_width, snap_height):
-    problem_config['snap_width'] = snap_width
-    problem_config['snap_height'] = snap_height
