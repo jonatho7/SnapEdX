@@ -18,8 +18,21 @@ $(document).ready(function() {
 
 });
 
+var timeoutFunctionForSubmit;
 
 function handle_submit_event_from_xblock(data) {
     console.log("Received submit event from xblock. Calling startStudentTests() to start the tests");
-    startStudentTests();
+    var returnString = startStudentTests();
+    console.log(returnString);
+
+    //start the timer
+    // Wait for 30 seconds to complete the tests
+    var timeoutInSeconds = 30;
+    timeoutFunctionForSubmit = setTimeout(function() {
+        console.log("Timeout: Tests didn't complete in " + timeoutInSeconds + ' seconds.');
+        send_message_to_parent(MESSAGES_TYPE.SUBMIT, retrieveTestResults());
+        timeoutInSeconds = undefined;
+    }, timeoutInSeconds * 1000 );
+
+
 }
