@@ -31,7 +31,8 @@ var MESSAGES_TYPE = {
     READY: 'READY',   // Message to indicate that iframe is setup
     WATCHED: 'WATCHED',  // Watched event to parent
     SUBMIT:  'SUBMIT',  // Submit (obviously student submit) event from Xblock
-     RESULT:  'RESULT'  // Event to send results from snap to Xblock
+     RESULT:  'RESULT',  // Event to send results from snap to Xblock
+     TRACKING: 'TRACKING'   //  Tracking of students' interactions with Snap IDE
 };
 
 
