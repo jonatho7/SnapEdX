@@ -57,7 +57,29 @@ ReporterBlockMorph.prototype.getBlockXML = function(){
     return xml;
 }
 
+HandMorph.prototype.drop = function () {
+    var target, morphToDrop;
+    if (this.children.length !== 0) {
+        morphToDrop = this.children[0];
+        target = this.dropTargetFor(morphToDrop);
+        this.changed();
+        target.add(morphToDrop);
+        morphToDrop.changed();
+        morphToDrop.removeShadow();
+        this.children = [];
+        this.setExtent(new Point());
+        if (morphToDrop.justDropped) {
+            morphToDrop.justDropped(this);
+        }
+        if (target.reactToDropOf) {
+            target.reactToDropOf(morphToDrop, this);
+        }
+        this.dragOrigin = null;
+    }
+    //custom tracking
+    trackingDropEvent(morphToDrop, target);
 
+};
 
 
 function trackingDropEvent(grab, target){
@@ -89,30 +111,3 @@ function trackingDropEvent(grab, target){
     	}
     }catch(e){}
 }
-
-/************************* Modification of Original Snap! For Tracking********************/
-HandMorph.prototype.drop = function () {
-    var target, morphToDrop;
-    if (this.children.length !== 0) {
-        morphToDrop = this.children[0];
-        target = this.dropTargetFor(morphToDrop);
-        this.changed();
-        target.add(morphToDrop);
-        morphToDrop.changed();
-        morphToDrop.removeShadow();
-        this.children = [];
-        this.setExtent(new Point());
-        if (morphToDrop.justDropped) {
-            morphToDrop.justDropped(this);
-        }
-        if (target.reactToDropOf) {
-            target.reactToDropOf(morphToDrop, this);
-        }
-        this.dragOrigin = null;
-    }
-    //custom tracking
-    trackingDropEvent(morphToDrop, target);
-
-};
-
-

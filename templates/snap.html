@@ -35,12 +35,9 @@
         <!-- Events to Xblock javascript code-->
         <script type="text/javascript" src="{{ SITE_URL_BASE }}/static/js/eventsToXblock.js"></script>
 
-        <!-- Custom Layout -->
-        <script type="text/javascript" src="{{ SITE_URL_BASE }}/static/js/custom-layout.js"></script>
-
         <!-- Tracking -->
         <script type="text/javascript" src="{{ SITE_URL_BASE }}/static/js/tracking.js"></script>
-
+        
         <!--Custom CSS added to project-->
         <link href="{{ SITE_URL_BASE }}/static/css/style.css" rel="stylesheet">
 
@@ -99,13 +96,9 @@
                 // Fixed size world
                 //world = new WorldMorph(document.getElementById('world'), false);
 
-
-
                 world.worldCanvas.focus();
                 global_ide = new IDE_Morph;
-                global_ide.verticalLayout = false;  //custom layout
                 global_ide.openIn(world);
-
 
                 //world.isDevMode = true;
 
@@ -125,7 +118,6 @@
 
         <!-- Fixed size world-->
         <!-- <canvas id="world" tabindex="1" width="{{ problem_config['snap_width'] }}" height="{{ problem_config['snap_height'] }}" ></canvas> -->
-
 
         {% if problem_config['include_map'] == True %}
             <div id="map-canvas" style="width: 480px; height: 327px; margin-top: 0px;"></div>
