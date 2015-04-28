@@ -163,7 +163,7 @@ def snap():
     # Opt1. Grab the optional parameters which can define the snap problem layout.
     snapWidth = request.args.get('snapWidth')
     snapHeight = request.args.get('snapHeight')
-    includeMap = request.args.get('includeMap')
+    includeMap = str(request.args.get('includeMap'))
 
     app.logger.debug(includeMap)
     app.logger.debug(type(includeMap))
@@ -176,7 +176,7 @@ def snap():
     if snapHeight is not None:
         problem_config['snap_height'] = snapHeight
 
-    if includeMap == True:
+    if includeMap == "True" or includeMap == "true":
         problem_config['include_map'] = True
 
     return render_template('snap.html', SITE_URL_BASE=SITE_URL_BASE, problem_config=problem_config)
