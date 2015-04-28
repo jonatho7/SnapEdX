@@ -119,11 +119,6 @@
         <!-- Fixed size world-->
         <canvas id="world" tabindex="1" width="{{ problem_config['snap_width'] }}" height="{{ problem_config['snap_height'] }}" ></canvas>
 
-
-        <form action="" style="margin-top: 2em;">
-            <input type="submit" value="Submit Answer">
-        </form>
-
         {% if problem_config['include_map'] == True %}
             <div id="map-canvas" style="width: 480px; height: 327px; margin-top: 0px;"></div>
         {% endif %}
