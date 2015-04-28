@@ -178,6 +178,8 @@ def snap():
 
     if includeMap == "True" or includeMap == "true":
         problem_config['include_map'] = True
+    else:
+        problem_config['include_map'] = False
 
     return render_template('snap.html', SITE_URL_BASE=SITE_URL_BASE, problem_config=problem_config)
 
