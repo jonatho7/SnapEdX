@@ -91,10 +91,10 @@
 			window.onload = function () {
 
                 // Auto-resize world.
-                // world = new WorldMorph(document.getElementById('world'));
+                world = new WorldMorph(document.getElementById('world'));
 
                 // Fixed size world
-                world = new WorldMorph(document.getElementById('world'), false);
+                //world = new WorldMorph(document.getElementById('world'), false);
 
                 world.worldCanvas.focus();
                 global_ide = new IDE_Morph;
@@ -114,10 +114,10 @@
 	<body style="margin: 0; background-color: #373737; ">
 
         <!-- Auto-resize world -->
-        <!-- <canvas id="world" tabindex="1"></canvas> -->
+        <canvas id="world" tabindex="1" style="position: absolute;"></canvas>
 
         <!-- Fixed size world-->
-        <canvas id="world" tabindex="1" width="{{ problem_config['snap_width'] }}" height="{{ problem_config['snap_height'] }}" ></canvas>
+        <!-- <canvas id="world" tabindex="1" width="{{ problem_config['snap_width'] }}" height="{{ problem_config['snap_height'] }}" ></canvas> -->
 
         {% if problem_config['include_map'] == True %}
             <div id="map-canvas" style="width: 480px; height: 327px; margin-top: 0px;"></div>
