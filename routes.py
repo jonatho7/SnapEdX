@@ -165,11 +165,6 @@ def snap():
     snapHeight = request.args.get('snapHeight')
     includeMap = str(request.args.get('includeMap'))
 
-    app.logger.debug(includeMap)
-    app.logger.debug(type(includeMap))
-
-    app.logger.debug(type(problem_config['include_map']))
-
     if snapWidth is not None:
         problem_config['snap_width'] = snapWidth
 
