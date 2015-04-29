@@ -27,10 +27,10 @@ function handle_submit_event_from_xblock(data) {
 
     //start the timer
     // Wait for 30 seconds to complete the tests
-    var timeoutInSeconds = 30;
+    var timeoutInSeconds = 20;
     timeoutFunctionForSubmit = setTimeout(function() {
         console.log("Timeout: Tests didn't complete in " + timeoutInSeconds + ' seconds.');
-        send_message_to_parent(MESSAGES_TYPE.SUBMIT, retrieveTestResults());
+        send_message_to_parent(MESSAGES_TYPE.RESULT, retrieveTestResults());
         timeoutInSeconds = undefined;
     }, timeoutInSeconds * 1000 );
 
