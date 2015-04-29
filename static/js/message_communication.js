@@ -32,7 +32,8 @@ var MESSAGES_TYPE = {
     WATCHED: 'WATCHED',  // Watched event to parent
     SUBMIT:  'SUBMIT',  // Submit (obviously student submit) event from Xblock
      RESULT:  'RESULT',  // Event to send results from snap to Xblock
-     TRACKING: 'TRACKING'   //  Tracking of students' interactions with Snap IDE
+     TRACKING: 'TRACKING',   //  Tracking of students' interactions with Snap IDE
+     CONFIG: 'CONFIG' //Initial setup  e.g. layout for Snap IDE
 };
 
 
@@ -72,7 +73,10 @@ $(document).ready(function(){
         //Just for testing to parent window
         send_message_to_parent(MESSAGES_TYPE.DEMO, { 'from:': 'iframe (snap)', 'to': 'xblock'});
 
-
+        // Register for custom configuration of Snap IDE
+        register_callback(MESSAGES_TYPE.CONFIG, function (data) {
+                global_ide.initializeSnapIDE(data);
+        });
 
     } else {
         console.log(" (Snap content) Loaded as main window");
