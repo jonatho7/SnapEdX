@@ -99,7 +99,7 @@ function trackingDropEvent(grab, target){
     	        if(grab.nextBlock()){
     	            var dropTarget = grab.nextBlock();
     	            if(dropTarget instanceof CommandBlockMorph){
-    	            	send_message_to_parent(MESSAGES_TYPE.TRACKING, {'type':INTERACTION_TYPE.DROP, block: grab.getBlockXML(), position:POSITION.ABOVE, target: dropTarget.getBlockXML()});
+    	            	send_message_to_parent(MESSAGES_TYPE.TRACKING, {'type':INTERACTION_TYPE.DROP, 'block': grab.getBlockXML(), 'position':POSITION.ABOVE, target: dropTarget.getBlockXML()});
     	            } 
     	        } else if(!dropTarget && target instanceof ScriptsMorph){
     	        	send_message_to_parent(MESSAGES_TYPE.TRACKING, { 'type': INTERACTION_TYPE.DROP, 'block': grab.getBlockXML(), 'position': POSITION.ON, 'target': TARGET.SCRIPTING_AREA});
@@ -109,9 +109,10 @@ function trackingDropEvent(grab, target){
     	    //place bottom of a block
     	        var dropTarget = grab.parent;
     	        if(dropTarget instanceof CommandBlockMorph){
-    	            send_message_to_parent(MESSAGES_TYPE.TRACKING, {'type':INTERACTION_TYPE.DROP, block: grab.getBlockXML(), position:POSITION.UNDER, target: dropTarget.getBlockXML()});
+    	            send_message_to_parent(MESSAGES_TYPE.TRACKING, {'type':INTERACTION_TYPE.DROP, 'block': grab.getBlockXML(), 'position':POSITION.UNDER, 'target': dropTarget.getBlockXML()});
     	        }
-    	    }    
+    	    }
+
     	}
     }catch(e){}
 }
@@ -157,16 +158,20 @@ BlockMorph.prototype.mouseClickLeft = function () {
         return top.mouseClickLeft();
     }
     if (receiver) {
-        trackingRunScriptEvent(top.getBlockSequenceXML());  //custom tracking
         stage = receiver.parentThatIsA(StageMorph);
         if (stage) {
             stage.threads.toggleProcess(top);
+            trackingRunScriptEvent(top);  //custom tracking
         }
     }
 };
 
-function trackingRunScriptEvent(script){
-    send_message_to_parent(MESSAGES_TYPE.TRACKING, {'type':INTERACTION_TYPE.RUN_SCRIPT, 'script': script});
+function trackingRunScriptEvent(block){
+    if(block.topBlock()==block){
+        send_message_to_parent(MESSAGES_TYPE.TRACKING, {'type':INTERACTION_TYPE.RUN_SCRIPT, 'script': block.getBlockXML()});
+    }else{
+        send_message_to_parent(MESSAGES_TYPE.TRACKING, {'type':INTERACTION_TYPE.RUN_SCRIPT, 'script': block.getBlockSequenceXML()});
+    }
 }
 
 /*********Track Button Press********************/
