@@ -1,5 +1,9 @@
 var INTERACTION_TYPE = {
     DROP: 'DROP',	//DROP A BLOCK
+    RENAME: 'RENAME',    //Rename
+    BUTTON_PRESS: 'BUTTON_PRESS',    //Click on buttons
+    RUN_SCRIPT: 'RUN_SCRIPT',    //User left-click on a script to run
+    DELETE: 'DELETE', //User delete a block/script
 };
 
 var POSITION = {
@@ -110,4 +114,94 @@ function trackingDropEvent(grab, target){
     	    }    
     	}
     }catch(e){}
+}
+
+
+/***********Track Rename*******************/
+ReporterBlockMorph.prototype.mouseClickLeft = function (pos) {
+    var newSpec;
+    var isRing;
+    if (this.parent instanceof BlockInputFragmentMorph) {
+        return this.parent.mouseClickLeft();
+    }
+    if (this.parent instanceof TemplateSlotMorph) {
+        isRing = this.parent.parent && this.parent.parent.parent &&
+            this.parent.parent.parent instanceof RingMorph;
+        new DialogBoxMorph(
+            this,
+            function(input){
+                trackingRename(this.blockSpec, input);  //custom tracking
+                this.setSpec(input);
+            },
+            this
+        ).prompt(
+            isRing ? "Input name" : "Script variable name",
+            this.blockSpec,
+            this.world()
+        );
+    } else {
+        ReporterBlockMorph.uber.mouseClickLeft.call(this, pos);
+    }
+};
+
+function trackingRename(oldName, newName){
+    send_message_to_parent(MESSAGES_TYPE.TRACKING, {'type':INTERACTION_TYPE.RENAME, 'from': oldName, 'to': newName});
+}
+
+/*********Track Run Script********************/
+BlockMorph.prototype.mouseClickLeft = function () {
+    var top = this.topBlock(),
+        receiver = top.receiver(),
+        stage;
+    if (top instanceof PrototypeHatBlockMorph) {
+        return top.mouseClickLeft();
+    }
+    if (receiver) {
+        trackingRunScriptEvent(top.getBlockSequenceXML());  //custom tracking
+        stage = receiver.parentThatIsA(StageMorph);
+        if (stage) {
+            stage.threads.toggleProcess(top);
+        }
+    }
+};
+
+function trackingRunScriptEvent(script){
+    send_message_to_parent(MESSAGES_TYPE.TRACKING, {'type':INTERACTION_TYPE.RUN_SCRIPT, 'script': script});
+}
+
+/*********Track Button Press********************/
+
+var BUTTON_TYPE = {
+    START: "START"
+};
+
+IDE_Morph.prototype.pressStart = function () {
+    if (this.world().currentKey === 16) { // shiftClicked
+        this.toggleFastTracking();
+    } else {
+        this.runScripts();
+        trackingButtonPressEvent(BUTTON_TYPE.START); //custom tracking
+    }
+};
+
+function trackingButtonPressEvent(buttonName){
+    send_message_to_parent(MESSAGES_TYPE.TRACKING, {'type':INTERACTION_TYPE.BUTTON_PRESS, 'button_name': BUTTON_TYPE.START});
+}
+
+/*********Track Delete********************/
+CommandBlockMorph.prototype.userDestroy = function () {
+    trackingDeleteEvent(this.getBlockXML());  //custom tracking
+    if (this.nextBlock()) {
+        this.userDestroyJustThis();
+        return;
+    }
+    var cslot = this.parentThatIsA(CSlotMorph);
+    this.destroy();
+    if (cslot) {
+        cslot.fixLayout();
+    }
+};
+
+function trackingDeleteEvent(deletedBlock){
+    send_message_to_parent(MESSAGES_TYPE.TRACKING, {'type':INTERACTION_TYPE.DELETE, 'target': deletedBlock});
 }
