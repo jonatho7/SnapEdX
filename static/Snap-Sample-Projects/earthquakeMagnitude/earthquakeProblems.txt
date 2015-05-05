@@ -1,0 +1,16 @@
+problem_name = String(help="Name of the problem", default='earthquakeMagnitude', scope=Scope.content)
+
+problem_title = String(help="Title of the problem", default='Finding the Highest Earthquake Magnitude', scope=Scope.content)
+
+problem_text = String(help="Text of the problem",
+                          default='In this example, you will be responsible for finding the value of the highest earthquake magnitude that has occurred within a time period. A few blocks have been provided for you. The first set of blocks gets the number of earthquakes that have occurred within the past time period and assigns the numEarthquakes variable to this value. A time period may be equal to "hour", "day", or "week". Make sure that your program will work for all of these time periods, and that you remember to use the "period" variable.\n\nUsing the "get (magnitude) of earthquake" block will be especially helpful for this problem. You will probably want to get the magnitude of each earthquake that has occurred in this time period, and use a loop to cycle through and check which magnitude is the highest. Lastly, make sure to use the "Report answer (magnitude)" block to report your answer, and click the submit button to check your work.',
+                          scope=Scope.content)
+						  
+						  
+problem_name = String(help="Name of the problem", default='earthquakeLocation', scope=Scope.content)
+
+problem_title = String(help="Title of the problem", default='Finding the Highest Earthquake Magnitude`s Location', scope=Scope.content)
+
+problem_text = String(help="Text of the problem",
+                          default='This problem will build off of the "Finding the Highest Earthquake Magnitude" problem. If you have not completed this problem yet, go back and complete this problem first.\n\nIn this problem, you will need to find the location description of the earthquake with the highest magnitude. To do this, use the "get (location description) of earthquake" block and assign this value to the locationDescription variable. Then report the locationDescription variable as your answer.\n\nHint: First find the earthquake which has the highest magnitude, just as you did in the previous problem, and then store the index of this earthquake. Then get the location description using the block described above and report your answer.',
+                          scope=Scope.content)
